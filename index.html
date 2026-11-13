@@ -121,6 +121,7 @@
     <button class="tab free" data-page="f2">④ 걸린 시간 만들기</button>
   </nav>
   <div class="tools">
+    <button class="chip" id="levelBtn" title="걸린 시간 문제 난이도" style="display:none">난이도: 보통</button>
     <button class="chip on" id="minNumBtn" title="바깥쪽 분 숫자 보이기">분 숫자</button>
     <button class="chip" id="fsBtn" title="전체화면">⛶ 전체화면</button>
   </div>
@@ -287,7 +288,7 @@ const clock1 = $("clock1"), clockS = $("clockS"), clockE = $("clockE");
 /* ---------- 설정 ---------- */
 const step = 1;   // 분침 조작은 1분 단위
 const rand = n => Math.floor(Math.random() * n);
-// ①② 문제: 1분 단위 60%, 5분 단위 40%
+// ① 문제: 1분 단위 60%, 5분 단위 40%
 const pickStep = () => Math.random() < 0.6 ? 1 : 5;
 $("minNumBtn").onclick = () => {
   const on = $("minNumBtn").classList.toggle("on");
@@ -298,7 +299,17 @@ $("minNumBtn").onclick = () => {
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
   document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === t.dataset.page));
+  $("levelBtn").style.display = t.dataset.page === "p2" ? "" : "none";   // 난이도는 ②번에서만
 });
+
+/* ---------- ② 난이도: 보통(5·10분 단위 반반) / 쉬움(10분 단위만) ---------- */
+let level = "보통";
+$("levelBtn").onclick = () => {
+  level = level === "보통" ? "쉬움" : "보통";
+  $("levelBtn").textContent = `난이도: ${level}`;
+  $("levelBtn").classList.toggle("on", level === "쉬움");
+  newP2();
+};
 
 /* ---------- 공통 ---------- */
 const val = inp => inp.value.trim() === "" ? null : Number(inp.value);
@@ -367,9 +378,14 @@ $("next1").onclick = newP1;
 /* ---------- ② 걸린 시간 ---------- */
 let p2 = {};
 function newP2(){
-  const s = pickStep();
-  const sh = rand(12) + 1, sm = rand(60 / s) * s;
-  const dur = (rand(180 / s) + 1) * s;                // 최대 3시간
+  // 보통: 10분 단위 50%, 5분 단위 50% / 쉬움: 10분 단위만
+  const s = level === "쉬움" || Math.random() < 0.5 ? 10 : 5;
+  const sh = rand(12) + 1;
+  let sm, dur;
+  do {
+    sm = rand(60 / s) * s;
+    dur = (rand(180 / s) + 1) * s;                    // 최대 3시간
+  } while (s === 5 && sm % 10 === 0 && dur % 10 === 0); // 5분 단위 문제엔 5분이 꼭 들어가게
   const tot = (sh % 12) * 60 + sm + dur;
   let eh = Math.floor(tot / 60) % 12; if (eh === 0) eh = 12;
   const em = tot % 60;
